@@ -5,10 +5,32 @@ Functions that I (Harjas Sandhu) have created in the process of this research pr
 import numpy as np
 import healpy as hp
 
-def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad:
-             int, side_len: int = 0, range_max: int = 0, mollview: bool = False) -> np.ndarray:
+def get_rand_locs(num_locs, lon_range: tuple = (-np.pi/2, np.pi/2),
+                  lat_range: tuple = (-np.pi/2, np.pi/2)) -> list:
     '''
-    Plot and/or return data around given locations on a map.
+    Returns a list of random locations in the form [longitude, latitude].
+    
+    Args:
+        num_locs: number of locations.
+        lon_range (optional): min and max values of longitude. Default is from -pi/2 to pi/2.
+        lat_range (optional): min and max values of latitude. Default is from -pi/2 to pi/2.
+
+    Returns:
+        loc_list: list containing locations in the form [longitude, latitude].
+    '''
+
+    lon_diff = lon_range[1] - lon_range[0]
+    lat_diff = lat_range[1] - lat_range[0]
+    loc_array = np.random.rand(2, num_locs)
+    loc_array[0] = loc_array[0] * lon_diff - lon_diff / 2
+    loc_array[1] = loc_array[1] * lat_diff - lat_diff / 2
+    loc_list = loc_array.T.tolist()
+    return loc_list
+
+def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad: int, side_len: int = 0,
+             range_max: int = 0, show_mollview: bool = False, units: str = "mK") -> np.ndarray:
+    '''
+    Plots and/or returns data around a location on a map.
     
     Args:
         map_array: 1d numpy array of pixels in healpy Ring format.
@@ -16,34 +38,34 @@ def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad:
         circ_rad: radius of the disk around the location to be considered.
         cutout_rad: radius of the pixels within the circle to be set to 0.
         side_len (optional): length of one side of the returned 2d array/image.
-        range_max (optional): max range for healpy mollview/gnomview.
-        mollview: if True, also show mollview projection.
+            If not given, will attempt to include entire circle.
+        range_max (optional): max pixel value for healpy mollview/gnomview projection.
+            If not given, will use 95th percentile pixel value of main disk.
+        show_mollview (optional): if True, also show mollview projection.
+        units (optional): units for map projection. Default is "mK".
 
     Returns:
         data_2d: 2d numpy array of pixels returned by healpy.gnomview.
     '''
     nside = hp.get_nside(map_array)
 
-    vec_rad = loc
-    vec_deg = np.rad2deg(vec_rad)
-    vec_3d = hp.ang2vec(*vec_deg, lonlat=True)
+    loc_deg = np.rad2deg(loc)
+    loc_3d = hp.ang2vec(*loc_deg, lonlat=True)
 
-    ipix_disc = hp.query_disc(nside=nside, vec=vec_3d, radius=circ_rad)
-    subdisc = hp.query_disc(nside=nside, vec=vec_3d, radius=cutout_rad)
+    ipix_disc = hp.query_disc(nside=nside, vec=loc_3d, radius=circ_rad)
+    subdisc = hp.query_disc(nside=nside, vec=loc_3d, radius=cutout_rad)
 
-    submap = np.zeros(hp.nside2npix(nside=nside))
-    disc_values = map_array[ipix_disc]
-    subdisc_values = map_array[subdisc]
-    submap[ipix_disc] = disc_values
+    submap = np.zeros(len(map_array))
+    submap[ipix_disc] = map_array[ipix_disc]
     submap[subdisc] = 0
-    if range_max == 0:
-        range_max = max(subdisc_values)
 
-    if mollview:
+    if range_max == 0:
+        range_max = np.percentile(map_array[ipix_disc], 95)
+    if show_mollview:
         hp.mollview(
             submap,
             title="Submap Mollweide Projection",
-            unit="mK",
+            unit=units,
             max=range_max
         )
 
@@ -51,10 +73,10 @@ def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad:
         side_len = circ_rad * 4750 # magic number found with brute force.
     data_2d = hp.gnomview(
         submap,
-        rot=vec_deg,
+        rot=loc_deg,
         xsize=side_len,
-        title="Submap Gnomonic Projection (zoomed in)",
-        unit="mK",
+        title="Submap Gnomonic Projection",
+        unit=units,
         max=range_max,
         return_projected_map=True
     )
