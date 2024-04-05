@@ -28,7 +28,7 @@ def get_rand_locs(num_locs, lon_range: tuple = (-np.pi/2, np.pi/2),
     return loc_list
 
 def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad: int, side_len: int = 0,
-             range_max: int = 0, show_mollview: bool = False, show_gnomview: bool = True, units: str = "mK") -> np.ndarray:
+             range_max: int = 0, show_mollview: bool = False, show_gnomview: bool = False, units: str = "mK") -> np.ndarray:
     '''
     Plots and/or returns data around a location on a map.
     
@@ -41,7 +41,8 @@ def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad: int, s
             If not given, will attempt to include entire circle.
         range_max (optional): max pixel value for healpy mollview/gnomview projection.
             If not given, will use 95th percentile pixel value of main disk.
-        show_mollview (optional): if True, also show mollview projection.
+        show_mollview (optional): if True, show mollweide projection. Default False.
+        show_mollview (optional): if True, show gnomonic projection. Default False.
         units (optional): units for map projection. Default is "mK".
 
     Returns:
