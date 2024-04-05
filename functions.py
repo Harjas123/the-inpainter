@@ -28,7 +28,7 @@ def get_rand_locs(num_locs, lon_range: tuple = (-np.pi/2, np.pi/2),
     return loc_list
 
 def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad: int, side_len: int = 0,
-             range_max: int = 0, show_mollview: bool = False, units: str = "mK") -> np.ndarray:
+             range_max: int = 0, show_mollview: bool = False, show_gnomview: bool = True, units: str = "mK") -> np.ndarray:
     '''
     Plots and/or returns data around a location on a map.
     
@@ -78,7 +78,8 @@ def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad: int, s
         title="Submap Gnomonic Projection",
         unit=units,
         max=range_max,
-        return_projected_map=True
+        return_projected_map=True,
+        no_plot=(not show_gnomview)
     )
 
     return data_2d
