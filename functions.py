@@ -5,7 +5,7 @@ Functions that I (Harjas Sandhu) have created in the process of this research pr
 import numpy as np
 import healpy as hp
 
-def get_rand_locs(num_locs, lon_range: tuple = (-np.pi/2, np.pi/2),
+def get_rand_locs(num_locs, lon_range: tuple = (-np.pi, np.pi),
                   lat_range: tuple = (-np.pi/2, np.pi/2)) -> list:
     '''
     Returns a list of random locations in the form [longitude, latitude].
@@ -27,8 +27,9 @@ def get_rand_locs(num_locs, lon_range: tuple = (-np.pi/2, np.pi/2),
     loc_list = loc_array.T.tolist()
     return loc_list
 
-def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad: int, side_len: int = 0,
-             range_max: int = 0, show_mollview: bool = False, show_gnomview: bool = False, units: str = "mK") -> np.ndarray:
+def loc2data(map_array: np.ndarray, loc: list[float], circ_rad: float, cutout_rad: float,
+             side_len: int = 0, range_max: int = 0, show_mollview: bool = False, show_gnomview: bool = False,
+             units: str = "mK") -> tuple[np.ndarray, float, float]:
     '''
     Plots and/or returns data around a location on a map.
     
@@ -47,6 +48,9 @@ def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad: int, s
 
     Returns:
         data_2d: 2d numpy array of pixels returned by healpy.gnomview.
+        annulus_average: average value of pixels in circle (excluding cutout)
+        actual_average: average value of pixels in cutout
+
     '''
     nside = hp.get_nside(map_array)
 
@@ -71,7 +75,7 @@ def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad: int, s
         )
 
     if side_len == 0:
-        side_len = circ_rad * 4750 # magic number found with brute force.
+        side_len = int(circ_rad * 4750) # magic number found with brute force.
     data_2d = hp.gnomview(
         submap,
         rot=loc_deg,
@@ -83,4 +87,7 @@ def loc2data(map_array: np.ndarray, loc: list, circ_rad: int, cutout_rad: int, s
         no_plot=(not show_gnomview)
     )
 
-    return data_2d
+    submap[subdisc] = np.nan
+    annulus_average: float = np.nanmean(submap[ipix_disc])
+    actual_average: float = np.nanmean(map_array[subdisc])
+    return (data_2d, annulus_average, actual_average)
