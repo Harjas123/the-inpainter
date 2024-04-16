@@ -6,14 +6,15 @@ import numpy as np
 import healpy as hp
 
 def get_rand_locs(num_locs, lon_range: tuple = (-np.pi, np.pi),
-                  lat_range: tuple = (-np.pi/2, np.pi/2)) -> list:
+                  lat_range: tuple = (-np.pi/2, np.pi/2), sphere_distr: bool = True) -> list:
     '''
     Returns a list of random locations in the form [longitude, latitude].
     
     Args:
         num_locs: number of locations.
-        lon_range (optional): min and max values of longitude. Default is from -pi/2 to pi/2.
+        lon_range (optional): min and max values of longitude. Default is from -pi to pi.
         lat_range (optional): min and max values of latitude. Default is from -pi/2 to pi/2.
+        sphere_distr (optional): if True, latitude values will be random on a sphere. Default True.
 
     Returns:
         loc_list: list containing locations in the form [longitude, latitude].
@@ -23,7 +24,10 @@ def get_rand_locs(num_locs, lon_range: tuple = (-np.pi, np.pi),
     lat_diff = lat_range[1] - lat_range[0]
     loc_array = np.random.rand(2, num_locs)
     loc_array[0] = loc_array[0] * lon_diff - lon_diff / 2
-    loc_array[1] = loc_array[1] * lat_diff - lat_diff / 2
+    if sphere_distr:
+        loc_array[1] = (np.arcsin(loc_array[1] * 2 - 1) / np.pi + 0.5) * lat_diff - lat_diff / 2
+    else:
+        loc_array[1] = loc_array[1] * lat_diff - lat_diff / 2
     loc_list = loc_array.T.tolist()
     return loc_list
 
