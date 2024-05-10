@@ -101,6 +101,7 @@ def loc2amplitude(map_array: np.ndarray, loc: list[float], circ_rad: float,
         loc: a longitude and latitude location on the map in radians.
         circ_rad: radius of the disk around the location to be considered.
         cutout_rad: radius of the pixels within the circle to be set to 0.
+                    If < 0, will only cut out a single pixel.
 
     Returns:
         annulus_average: average value of pixels in circle (excluding cutout)
@@ -113,7 +114,10 @@ def loc2amplitude(map_array: np.ndarray, loc: list[float], circ_rad: float,
     loc_3d = hp.ang2vec(*loc_deg, lonlat=True)
 
     ipix_disc = hp.query_disc(nside=nside, vec=loc_3d, radius=circ_rad)
-    subdisc = hp.query_disc(nside=nside, vec=loc_3d, radius=cutout_rad)
+    if cutout_rad >= 0:
+        subdisc = hp.query_disc(nside=nside, vec=loc_3d, radius=cutout_rad)
+    else:
+        subdisc = hp.ang2pix(nside, *loc_deg, lonlat=True)
 
     submap = np.zeros(len(map_array))
     submap[ipix_disc] = map_array[ipix_disc]
