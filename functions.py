@@ -33,7 +33,7 @@ def get_rand_locs(num_locs, lon_range: tuple = (-np.pi, np.pi),
 
 def loc2data(map_array: np.ndarray, loc: list[float], circ_rad: float, cutout_rad: float,
              side_len: int = 0, range_max: int = 0, show_mollview: bool = False, show_gnomview: bool = False,
-             units: str = "mK") -> np.ndarray:
+             units: str = "mK") -> tuple[np.ndarray, np.ndarray]:
     '''
     Plots and/or returns data around a location on a map.
     
@@ -81,7 +81,7 @@ def loc2data(map_array: np.ndarray, loc: list[float], circ_rad: float, cutout_ra
 
     if side_len == 0:
         side_len = int(circ_rad * 4750) # magic number found with brute force.
-    data_2d = hp.gnomview(
+    annulus_2d = hp.gnomview(
         submap,
         rot=loc_deg,
         xsize=side_len,
@@ -92,7 +92,20 @@ def loc2data(map_array: np.ndarray, loc: list[float], circ_rad: float, cutout_ra
         no_plot=(not show_gnomview)
     )
 
-    return data_2d
+    submap[ipix_disc] = 0
+    submap[subdisc] = map_array[subdisc]
+    actual_2d = hp.gnomview(
+        submap,
+        rot=loc_deg,
+        xsize=side_len,
+        title="Submap Gnomonic Projection",
+        unit=units,
+        max=range_max,
+        return_projected_map=True,
+        no_plot=(not show_gnomview)
+    )
+
+    return (annulus_2d, actual_2d)
 
 def loc2annulus(map_array: np.ndarray, loc: list[float], circ_rad: float,
                   cutout_rad: float) -> tuple[np.ndarray, np.ndarray]:
