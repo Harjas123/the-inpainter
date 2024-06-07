@@ -94,7 +94,7 @@ def loc2data(map_array: np.ndarray, loc: list[float], circ_rad: float, cutout_ra
 
     submap[ipix_disc] = 0
     submap[subdisc] = map_array[subdisc]
-    actual_2d = hp.gnomview(
+    source_2d = hp.gnomview(
         submap,
         rot=loc_deg,
         xsize=side_len,
@@ -105,12 +105,12 @@ def loc2data(map_array: np.ndarray, loc: list[float], circ_rad: float, cutout_ra
         no_plot=(not show_gnomview)
     )
 
-    return (annulus_2d, actual_2d)
+    return (annulus_2d, source_2d)
 
 def loc2annulus(map_array: np.ndarray, loc: list[float], circ_rad: float,
                   cutout_rad: float) -> tuple[np.ndarray, np.ndarray]:
     '''
-    Returns annulus average and actual average of pixel values in a location on a map.
+    Returns annulus average and source average of pixel values in a location on a map.
     
     Args:
         map_array: 1d numpy array of pixels in healpy Ring format.
@@ -121,7 +121,7 @@ def loc2annulus(map_array: np.ndarray, loc: list[float], circ_rad: float,
 
     Returns:
         annulus: pixels in circle, with cutout pixels set to np.nan
-        actual: pixels in cutout
+        source: pixels in cutout
 
     '''
     nside = hp.get_nside(map_array)
@@ -132,10 +132,10 @@ def loc2annulus(map_array: np.ndarray, loc: list[float], circ_rad: float,
     ipix_disc = hp.query_disc(nside=nside, vec=loc_3d, radius=circ_rad)
     if cutout_rad >= 0:
         subdisc = hp.query_disc(nside=nside, vec=loc_3d, radius=cutout_rad)
-        actual = map_array[subdisc]
+        source = map_array[subdisc]
     else:
         subdisc = hp.ang2pix(nside, *loc_deg, lonlat=True)
-        actual = np.array(map_array[subdisc])
+        source = np.array(map_array[subdisc])
 
     submap = np.zeros(len(map_array))
     submap[ipix_disc] = map_array[ipix_disc]
@@ -143,13 +143,13 @@ def loc2annulus(map_array: np.ndarray, loc: list[float], circ_rad: float,
 
     annulus = submap[ipix_disc]
 
-    return (annulus, actual)
+    return (annulus, source)
 
 # SAME AS loc2annulus EXCEPT IT RETURNS THE AVERAGES DIRECTLY INSTEAD OF THE LIST VALUES
 def loc2amplitude(map_array: np.ndarray, loc: list[float], circ_rad: float,
                   cutout_rad: float) -> tuple[float, float]:
     '''
-    Returns annulus average and actual average of pixel values in a location on a map.
+    Returns annulus average and source average of pixel values in a location on a map.
     
     Args:
         map_array: 1d numpy array of pixels in healpy Ring format.
@@ -160,7 +160,7 @@ def loc2amplitude(map_array: np.ndarray, loc: list[float], circ_rad: float,
 
     Returns:
         annulus_average: average value of pixels in circle (excluding cutout)
-        actual_average: average value of pixels in cutout
+        source_average: average value of pixels in cutout
 
     '''
     nside = hp.get_nside(map_array)
@@ -179,5 +179,5 @@ def loc2amplitude(map_array: np.ndarray, loc: list[float], circ_rad: float,
 
     submap[subdisc] = np.nan
     annulus_average: float = np.nanmean(submap[ipix_disc])
-    actual_average: float = np.nanmean(map_array[subdisc])
-    return (annulus_average, actual_average)
+    source_average: float = np.nanmean(map_array[subdisc])
+    return (annulus_average, source_average)
